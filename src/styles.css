@@ -1,41 +1,104 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f3f4f6;
+  background: #eef0f3;
+  color: #111827;
 }
 
 .container {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: auto;
-  padding: 20px;
+  padding: 24px;
 }
 
 .card {
   background: white;
-  padding: 20px;
-  border-radius: 12px;
-  margin-bottom: 20px;
+  padding: 22px;
+  border-radius: 14px;
+  margin-bottom: 22px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.header {
+  border-left: 8px solid #111827;
+}
+
+h1 {
+  margin: 0 0 8px;
+}
+
+h2 {
+  margin-top: 0;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 8px;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+  align-items: center;
 }
 
-input {
+label {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+input, textarea {
   width: 100%;
+  box-sizing: border-box;
   padding: 10px;
+  margin-top: 6px;
+  border: 1px solid #9ca3af;
+  border-radius: 8px;
+  font-size: 14px;
 }
 
-.good {
-  color: green;
+textarea {
+  min-height: 120px;
 }
 
-.bad {
-  color: red;
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+th {
+  background: #111827;
+  color: white;
+}
+
+th, td {
+  border: 1px solid #d1d5db;
+  padding: 8px;
+  text-align: left;
+}
+
+td input {
+  margin: 0;
+}
+
+.pass {
+  color: #15803d;
+  font-weight: bold;
+}
+
+.fail, .low, .high {
+  color: #b91c1c;
+  font-weight: bold;
 }
 
 .warn {
-  color: orange;
+  color: #b45309;
+  font-weight: bold;
+}
+
+.blank {
+  color: #6b7280;
+}
+
+.summary {
+  border-top: 6px solid #111827;
 }
