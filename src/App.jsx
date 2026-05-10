@@ -42,13 +42,25 @@ function buildAnalysis(psd, bitumen, density, marshall, comments) {
   const rootCauses = [];
   const designChanges = [];
   const immediateChecks = [];
+  const advancedCorrelation = [];
 
   const commentText = comments.toLowerCase();
+
   const bitStatus = checkRange(bitumen, 4.4, 5.0);
   const airStatus = checkRange(density.airVoids, 4.0, 7.0);
   const flowStatus = checkRange(marshall.flow, 2.0, 4.0);
+
+  const bitValue = Number(bitumen);
+  const airValue = Number(density.airVoids);
+  const flowValue = Number(marshall.flow);
   const stabValue = Number(marshall.stability);
   const vmaValue = Number(density.vma);
+  const filler075 = Number(psd["0.075mm"]);
+
+  const stiffnessRatio =
+    entered(marshall.stability) && entered(marshall.flow) && flowValue !== 0
+      ? stabValue / flowValue
+      : null;
 
   const psdResults = psdSpecs.map((s) => ({
     ...s,
@@ -71,14 +83,18 @@ function buildAnalysis(psd, bitumen, density, marshall, comments) {
     rootCauses.push("Likely contributors include insufficient dust/filler feed, fine aggregate deficiency, segregation, or a blend not matching the approved target grading.");
     designChanges.push("Increase overall dust/filler contribution where practical and review the aggregate blend to bring lower sieves back toward target.");
     actions.push("Monitor lower sieves closely during production. Low fines can reduce mortar cohesion, increase harshness, affect compaction and increase ravelling/moisture risk.");
+    advancedCorrelation.push("Low filler/fines reduces mastic or mortar cohesion. Mastic is the binder/filler mortar phase that helps hold the aggregate skeleton together.");
   }
 
   if (bitStatus === "pass") good.push("Bitumen content is within specification.");
+
   if (bitStatus === "low") {
     issues.push(`Bitumen content is LOW — actual ${bitumen}% vs spec 4.4-5.0%.`);
     actions.push("Confirm binder content by repeat extraction before making major production changes.");
     designChanges.push("If repeat testing confirms low binder, increase binder toward target 4.7%, or at least 4.5–4.7%, while monitoring air voids, stability and flow.");
+    advancedCorrelation.push("Binder influence on voids: as a rule of thumb, each 0.1% binder increase may reduce air voids by approximately 0.3%. Each 0.1% binder decrease may increase air voids by approximately 0.3%.");
   }
+
   if (bitStatus === "high") {
     issues.push(`Bitumen content is HIGH — actual ${bitumen}% vs spec 4.4-5.0%.`);
     rootCauses.push("High binder may be caused by pump calibration, density compensation error, incorrect set point, sampling error, or extraction/calculation issue.");
@@ -86,10 +102,12 @@ function buildAnalysis(psd, bitumen, density, marshall, comments) {
   }
 
   if (airStatus === "pass") good.push("Air voids are within specification.");
+
   if (airStatus === "low") {
     issues.push(`Air voids are LOW — actual ${density.airVoids}% vs spec 4.0-7.0%.`);
     rootCauses.push("Low air voids may indicate rich mix, excessive fines, over-compaction, high density or reduced void structure.");
   }
+
   if (airStatus === "high") {
     issues.push(`Air voids are HIGH — actual ${density.airVoids}% vs spec 4.0-7.0%.`);
     rootCauses.push("High air voids may indicate low binder, coarse grading, insufficient fines, poor compaction or harsh aggregate structure.");
@@ -104,11 +122,16 @@ function buildAnalysis(psd, bitumen, density, marshall, comments) {
   }
 
   if (flowStatus === "pass") good.push("Marshall Flow is within specification.");
+
   if (flowStatus === "high") {
     issues.push(`Marshall Flow is HIGH — actual ${marshall.flow}mm vs spec 2.0-4.0mm.`);
     rootCauses.push("High flow may indicate soft/tender mix, excess binder, weak aggregate skeleton, poor sample conditioning, timing issue, water bath issue, or flow gauge/machine issue.");
+    immediateChecks.push("Verify Marshall machine platen speed is set to 51mm/min.");
+    immediateChecks.push("Check flow gauge/needle setup, zeroing, movement and machine settings.");
+    immediateChecks.push("Check whether a flow correction factor or conversion factor has accidentally been applied twice.");
     immediateChecks.push("Verify Marshall timing, bath temperature, conditioning duration, transfer time, machine calibration and flow gauge operation.");
   }
+
   if (flowStatus === "low") {
     issues.push(`Marshall Flow is LOW — actual ${marshall.flow}mm vs spec 2.0-4.0mm.`);
     rootCauses.push("Low flow may indicate stiff/brittle mix, low binder, harsh grading, excessive filler or sample/testing issue.");
@@ -122,16 +145,42 @@ function buildAnalysis(psd, bitumen, density, marshall, comments) {
     }
   }
 
+  if (stiffnessRatio !== null) {
+    advancedCorrelation.push(`Marshall Stability ÷ Flow ratio = ${stiffnessRatio.toFixed(2)} kN/mm. This indicates how many kN of load were required per mm of sample deformation.`);
+    if (stiffnessRatio < 2) {
+      warnings.push("The Stability/Flow ratio is low, indicating high deformation relative to load resistance. This supports investigating Flow validity, machine setup, conditioning and mix tenderness.");
+    }
+  }
+
+  if (entered(psd["0.075mm"])) {
+    advancedCorrelation.push("0.075mm filler/dust has a direct relationship with void structure and mastic behaviour. As a rule of thumb, each 0.1% increase in 0.075mm filler may increase voids by approximately 0.1%, depending on binder/filler balance and aggregate packing.");
+  }
+
   if (flowStatus === "high" && bitStatus === "low" && airStatus === "pass" && entered(marshall.stability) && stabValue >= 8) {
     warnings.push("The result pattern is technically inconsistent: Flow is high, but binder is low, air voids are acceptable and stability is acceptable.");
     rootCauses.push("The low binder result may be a flyer or extraction/calculation issue if production settings and other volumetrics do not support a genuinely lean mix.");
+    rootCauses.push("The high Flow result may be caused by Marshall machine setup, platen speed, flow gauge issue, test timing issue, or correction factor error rather than the actual mix behaviour.");
     immediateChecks.push("Repeat binder extraction and independently check sample mass, extraction process, filter/fines correction, drying, calculation and sample identification.");
+    immediateChecks.push("Repeat Marshall Flow with confirmed 51mm/min platen speed and verified flow gauge movement.");
+    advancedCorrelation.push("Low binder + low fines would normally suggest a harsher/stiffer mix, not extremely high Flow. This mismatch increases suspicion around extraction accuracy and Marshall Flow validity.");
+  }
+
+  if (entered(filler075) && filler075 < 3 && bitStatus === "low") {
+    warnings.push("Both 0.075mm filler and binder content are low. This may be a true coarse/lean mix issue, but it may also indicate filler recovery or extraction process issues.");
+    rootCauses.push("Filler lost during the bitumen extraction/wash process can affect both the calculated binder content and the reported 0.075mm result.");
+    immediateChecks.push("Review centrifuge extraction tube sediment recovery, filter/fines correction and whether sediment/filler was allowed to settle or was not recovered correctly.");
   }
 
   if (commentText.includes("time limit") || commentText.includes("warning")) {
     warnings.push("Entered comments identify a test time limit/warning issue. This directly affects confidence in the Marshall Flow result.");
     rootCauses.push("The elevated Flow result may be influenced by testing validity, conditioning time or timing compliance.");
     immediateChecks.push("Repeat Marshall Stability and Flow testing under controlled timing conditions before accepting Flow as representative.");
+  }
+
+  if (commentText.includes("tube") || commentText.includes("sediment") || commentText.includes("centrifuge") || commentText.includes("extraction")) {
+    warnings.push("Comments reference centrifuge extraction/tube/sediment process. Binder and filler recovery should be treated as a key investigation item.");
+    rootCauses.push("Letting sediment sit too long in extraction tubes or failing to recover filler can affect binder calculation and the 0.075mm passing result.");
+    immediateChecks.push("Review before/after wash mass, solvent extraction procedure, sediment recovery, filler correction and drying process.");
   }
 
   if (commentText.includes("pump") || commentText.includes("bitumen pump")) {
@@ -146,12 +195,25 @@ function buildAnalysis(psd, bitumen, density, marshall, comments) {
     immediateChecks.push("Comment references temperature/water bath. Verify thermometers, bath temperature, conditioning period and sample transfer time.");
   }
 
+  if (commentText.includes("platen") || commentText.includes("51") || commentText.includes("gauge") || commentText.includes("needle") || commentText.includes("factor")) {
+    warnings.push("Comments reference Marshall machine setup, platen speed, gauge/needle movement or correction factor. Flow result should be treated as suspect until verified.");
+    immediateChecks.push("Confirm platen speed is 51mm/min, flow gauge is correctly zeroed, machine settings are correct, and no correction factor has been applied twice.");
+  }
+
+  if (entered(bitValue) && entered(airValue)) {
+    const binderIncreaseToTarget = 4.7 - bitValue;
+    if (binderIncreaseToTarget > 0) {
+      const estimatedVoidDrop = binderIncreaseToTarget * 3;
+      advancedCorrelation.push(`If binder is increased from ${bitValue.toFixed(2)}% to 4.70%, expected air voids may reduce by roughly ${estimatedVoidDrop.toFixed(2)}% based on binder influence on voids.`);
+    }
+  }
+
   if (issues.length === 0) {
     good.push("Overall result appears conforming based on entered values. Mix appears acceptable against entered MRWA limits.");
     actions.push("Continue monitoring trends against approved mix design targets. Tighten any results close to limits before they become non-conforming.");
   }
 
-  return { issues, warnings, good, actions, rootCauses, designChanges, immediateChecks };
+  return { issues, warnings, good, actions, rootCauses, designChanges, immediateChecks, advancedCorrelation };
 }
 
 export default function App() {
@@ -243,89 +305,19 @@ export default function App() {
       <div className="container">
         <div className="card header">
           <h1>A.S.T.A Information Guide</h1>
-          <p>How each asphalt result works, common causes of high/low results, likely fixes and how changes affect the rest of the mix.</p>
+          <p>How asphalt test results interact, including binder, filler, voids, extraction and Marshall Flow.</p>
         </div>
 
         <button className="analyseButton" onClick={() => setShowInfo(false)}>Back to Test Entry</button>
 
         <div className="card">
-          <h2>PSD – Particle Size Distribution</h2>
-          <p><strong>What it is:</strong> PSD shows the percentage of aggregate passing each sieve. It controls the stone skeleton, mortar content, workability, compaction and durability of the asphalt mix.</p>
-          <p><strong>If coarse / low passing:</strong> The mix may be short of fines or filler. This can reduce mortar, make the mix harsh, increase permeability, increase air void sensitivity and increase ravelling/moisture risk.</p>
-          <p><strong>Likely causes:</strong> Fine aggregate underfeeding, fixed dust feed too low, baghouse/filler return issue, stockpile segregation, loader practice, incorrect blend proportions or quarry grading changes.</p>
-          <p><strong>Likely fixes:</strong> Increase overall dust/filler feed where practical, review fine aggregate contribution, confirm current quarry gradings, check cold feed calibration and monitor the 0.600mm, 0.300mm, 0.150mm and 0.075mm sieves closely.</p>
-          <p><strong>If fine / high passing:</strong> Too many fines can increase binder demand, tighten voids, make the mix tender or over-filled, and may increase stiffness depending on binder/filler balance.</p>
-          <p><strong>Effect on other results:</strong> Adding fines/filler may reduce air voids, increase density, improve cohesion, but can also increase binder demand and affect Flow/Stability if overdone.</p>
-
-          <h2>Bitumen Content</h2>
-          <p><strong>What it is:</strong> Bitumen content is the binder percentage in the mix. It holds aggregate together, waterproofs the mix and gives flexibility.</p>
-          <p><strong>If low:</strong> The mix may become dry, harsh, difficult to compact, more permeable and more prone to ravelling/cracking.</p>
-          <p><strong>Likely causes:</strong> Low binder set point, binder pump/flow meter issue, density compensation issue, sample splitting issue, extraction/calculation error or unrepresentative sample.</p>
-          <p><strong>Likely fixes:</strong> Repeat extraction first. Check binder pump calibration, flow meter, bitumen density input and plant set point. If confirmed low, increase binder toward target, generally around 4.7% for this mix design.</p>
-          <p><strong>If high:</strong> The mix may become rich, soft, tender, prone to flushing, bleeding, rutting and high Flow.</p>
-          <p><strong>Effect on other results:</strong> Increasing binder usually improves workability and density, can lower air voids, can increase Flow, and may reduce Stability if excessive. Reducing binder can increase voids, reduce Flow and make the mix harsher.</p>
-          <p><strong>Important correlation:</strong> If binder is reported low but Flow is high and air voids/stability are acceptable, the binder result may be a flyer and should be retested before making large production changes.</p>
-
-          <h2>Average Compaction Temperature</h2>
-          <p><strong>What it is:</strong> The temperature of the mix during compaction. It affects workability, density and Marshall performance.</p>
-          <p><strong>If too low:</strong> Mix becomes stiff, harder to compact, may produce higher air voids and lower density.</p>
-          <p><strong>If too high:</strong> Mix may become overly soft/tender and may influence Flow or binder behaviour.</p>
-          <p><strong>Likely fixes:</strong> Confirm thermometer accuracy, sample handling time, reheating process, compaction timing and plant discharge temperature.</p>
-
-          <h2>Average Bulk Density</h2>
-          <p><strong>What it is:</strong> Bulk density shows how compacted the Marshall specimen is.</p>
-          <p><strong>If low:</strong> Usually indicates more air voids, poor compaction, coarse grading, low binder or harsh mix.</p>
-          <p><strong>If high:</strong> May indicate low voids, rich mix, high fines, high binder or over-compaction.</p>
-          <p><strong>Effect on other results:</strong> Bulk density is directly related to air voids. As density increases, air voids generally reduce.</p>
-
-          <h2>Maximum Density</h2>
-          <p><strong>What it is:</strong> Maximum density is used with bulk density to calculate air voids.</p>
-          <p><strong>If questionable:</strong> Air void calculations may also be wrong.</p>
-          <p><strong>Likely fixes:</strong> Confirm test procedure, sample mass, calibration, drying and calculation.</p>
-
-          <h2>Average Air Voids</h2>
-          <p><strong>What it is:</strong> Air voids are the air spaces left in the compacted asphalt. Target is 5.5%, with specification 4.0–7.0%.</p>
-          <p><strong>If low:</strong> Mix may be too dense/rich, with increased bleeding, flushing and rutting risk.</p>
-          <p><strong>Likely causes:</strong> High binder, high fines, excessive compaction, low void aggregate structure or incorrect density result.</p>
-          <p><strong>Likely fixes:</strong> Check binder, fines, VMA, compaction effort and density calculations.</p>
-          <p><strong>If high:</strong> Mix may be too open, permeable and prone to oxidation, ravelling and moisture damage.</p>
-          <p><strong>Likely causes:</strong> Low binder, coarse grading, low fines/filler, poor compaction, low temperature or aggregate segregation.</p>
-          <p><strong>Likely fixes:</strong> Increase binder if confirmed low, increase fines/filler if grading is coarse, improve compaction temperature/process and review blend.</p>
-
-          <h2>Total V.M.A</h2>
-          <p><strong>What it is:</strong> VMA is the void space within the aggregate skeleton. It provides room for binder and air voids.</p>
-          <p><strong>If low:</strong> There may not be enough space for binder film thickness, reducing durability.</p>
-          <p><strong>Likely causes:</strong> Over-packed grading, excessive mid-size material or poor aggregate blend balance.</p>
-          <p><strong>Likely fixes:</strong> Review aggregate blend shape, adjust coarse/fine balance and check target grading.</p>
-          <p><strong>Effect on other results:</strong> VMA affects binder film thickness, air voids, durability and compaction behaviour.</p>
-
-          <h2>Marshall Stability</h2>
-          <p><strong>What it is:</strong> Stability measures the maximum load the compacted specimen can carry before failure.</p>
-          <p><strong>If low:</strong> Mix may have weak aggregate structure, excess binder, poor compaction, rounded aggregate, high voids or sample/testing issues.</p>
-          <p><strong>Likely fixes:</strong> Improve aggregate interlock, review binder content, check density/compaction and verify sample preparation.</p>
-          <p><strong>If very high:</strong> Mix may be strong but potentially stiff/brittle if combined with low Flow or low binder.</p>
-          <p><strong>Effect on other results:</strong> Stability should be interpreted with Flow. Strong stability with abnormal Flow may point to testing or conditioning issues.</p>
-
-          <h2>Marshall Flow</h2>
-          <p><strong>What it is:</strong> Flow measures how much the sample deforms before failure.</p>
-          <p><strong>If high:</strong> Mix may be soft/tender, too rich in binder, weak in structure, over-conditioned, incorrectly tested or affected by flow gauge/machine issue.</p>
-          <p><strong>Likely fixes:</strong> Check Marshall timing, water bath temperature, conditioning duration, transfer time, flow gauge and machine calibration. Then review binder and aggregate structure.</p>
-          <p><strong>If low:</strong> Mix may be stiff/brittle, low in binder, harsh, over-filled with dust/filler or incorrectly conditioned.</p>
-          <p><strong>Effect on other results:</strong> Increasing binder tends to increase Flow. Increasing filler can either stiffen the mix or improve cohesion depending on amount and binder balance.</p>
-
-          <h2>How Changes Affect Other Results</h2>
-          <p><strong>Increase binder:</strong> Usually improves workability and compaction, lowers air voids, may increase Flow, may reduce Stability if excessive, and improves durability if the mix was dry.</p>
-          <p><strong>Reduce binder:</strong> May reduce Flow and bleeding risk, but can increase air voids, reduce durability, increase ravelling risk and make the mix harsh.</p>
-          <p><strong>Increase dust/filler:</strong> Can improve lower PSD, mortar cohesion and reduce permeability. Too much can increase stiffness, binder demand and compaction difficulty.</p>
-          <p><strong>Reduce dust/filler:</strong> Can reduce stiffness/tenderness if excessive, but may increase voids, reduce cohesion and increase ravelling risk if taken too far.</p>
-          <p><strong>Increase coarse aggregate:</strong> Can improve stone skeleton and stability, but may increase voids and harshness if fines/binder are not balanced.</p>
-          <p><strong>Increase fine aggregate:</strong> Can improve workability and fill voids, but too much can weaken stone-on-stone contact and increase tenderness.</p>
-
-          <h2>How A.S.T.A Correlates Results</h2>
-          <p>A.S.T.A does not just look at one failed item. It checks whether results make sense together.</p>
-          <p><strong>Example:</strong> High Flow + Low Binder + Acceptable Air Voids + Acceptable Stability may suggest testing, conditioning, timing or extraction issue rather than a simple production mix fault.</p>
-          <p><strong>Example:</strong> Low fines + High Air Voids + Low Binder points more strongly toward a coarse/lean production or mix design issue.</p>
-          <p><strong>Example:</strong> High binder + Low Air Voids + High Flow points more strongly toward rich/tender mix and possible rutting/flushing risk.</p>
+          <h2>Advanced Correlation Rules Added</h2>
+          <p><strong>Binder influence on voids:</strong> each 0.1% binder increase may reduce air voids by around 0.3%. Each 0.1% binder decrease may increase voids by around 0.3%.</p>
+          <p><strong>0.075mm filler influence:</strong> each 0.1% increase in 0.075mm filler may increase voids by around 0.1%, depending on aggregate packing and binder/filler balance.</p>
+          <p><strong>Mastic / mortar cohesion:</strong> binder plus filler creates the mastic or mortar phase. This affects cohesion, workability, permeability and durability.</p>
+          <p><strong>Marshall machine check:</strong> Flow testing should verify 51mm/min platen speed, gauge/needle operation, zeroing, machine settings and correction factor use.</p>
+          <p><strong>Extraction check:</strong> centrifuge extraction depends heavily on before/after wash mass, sediment/filler recovery, solvent extraction and drying. Filler loss can affect binder and 0.075mm results.</p>
+          <p><strong>Stability / Flow ratio:</strong> Stability divided by Flow gives kN/mm, showing load resistance per millimetre of deformation.</p>
         </div>
       </div>
     );
@@ -450,6 +442,9 @@ export default function App() {
 
           <h4>Immediate Checks Required</h4>
           {analysis.immediateChecks.length === 0 ? <p>No immediate checks triggered beyond normal review.</p> : analysis.immediateChecks.map((item, i) => <p key={i}>• {item}</p>)}
+
+          <h4>Advanced Correlation Notes</h4>
+          {analysis.advancedCorrelation.length === 0 ? <p>No advanced correlation notes triggered.</p> : analysis.advancedCorrelation.map((item, i) => <p key={i}>• {item}</p>)}
 
           <h4>Mix Design / Production Adjustments To Consider</h4>
           {analysis.designChanges.length === 0 ? <p>No mix design adjustment is currently recommended from entered data.</p> : analysis.designChanges.map((item, i) => <p key={i}>• {item}</p>)}
