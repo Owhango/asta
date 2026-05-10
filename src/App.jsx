@@ -44,11 +44,9 @@ function buildAnalysis(psd, bitumen, density, marshall, comments) {
   const immediateChecks = [];
 
   const commentText = comments.toLowerCase();
-
   const bitStatus = checkRange(bitumen, 4.4, 5.0);
   const airStatus = checkRange(density.airVoids, 4.0, 7.0);
   const flowStatus = checkRange(marshall.flow, 2.0, 4.0);
-
   const stabValue = Number(marshall.stability);
   const vmaValue = Number(density.vma);
 
@@ -70,20 +68,20 @@ function buildAnalysis(psd, bitumen, density, marshall, comments) {
 
   if (lowFines.length > 0) {
     warnings.push("The lower fine fraction is below specification. This indicates the mix is running coarse or short of fines/filler through the mortar fraction.");
-    rootCauses.push("Likely production/design contributors include insufficient dust/filler feed, fine aggregate deficiency, aggregate segregation, or a blend not matching the approved target grading.");
-    designChanges.push("Increase the overall dust/filler contribution where practical and review the aggregate blend to bring the 0.600mm, 0.300mm, 0.150mm and 0.075mm sieves back toward target.");
-    actions.push("Monitor the lower sieves closely during production. Low fines can reduce mortar cohesion, make the mix harsher, increase compaction sensitivity and increase ravelling/moisture risk.");
+    rootCauses.push("Likely contributors include insufficient dust/filler feed, fine aggregate deficiency, segregation, or a blend not matching the approved target grading.");
+    designChanges.push("Increase overall dust/filler contribution where practical and review the aggregate blend to bring lower sieves back toward target.");
+    actions.push("Monitor lower sieves closely during production. Low fines can reduce mortar cohesion, increase harshness, affect compaction and increase ravelling/moisture risk.");
   }
 
   if (bitStatus === "pass") good.push("Bitumen content is within specification.");
   if (bitStatus === "low") {
     issues.push(`Bitumen content is LOW — actual ${bitumen}% vs spec 4.4-5.0%.`);
     actions.push("Confirm binder content by repeat extraction before making major production changes.");
-    designChanges.push("If repeat testing confirms low binder, increase binder toward the approved target of 4.7%, or at minimum into the 4.5–4.7% range while monitoring air voids, stability and flow.");
+    designChanges.push("If repeat testing confirms low binder, increase binder toward target 4.7%, or at least 4.5–4.7%, while monitoring air voids, stability and flow.");
   }
   if (bitStatus === "high") {
     issues.push(`Bitumen content is HIGH — actual ${bitumen}% vs spec 4.4-5.0%.`);
-    rootCauses.push("High binder may be caused by binder pump calibration, density compensation error, incorrect set point, sampling error, or extraction/calculation issue.");
+    rootCauses.push("High binder may be caused by pump calibration, density compensation error, incorrect set point, sampling error, or extraction/calculation issue.");
     actions.push("Check binder pump calibration, bitumen flow meter, density input, production set point and extraction calculation.");
   }
 
@@ -108,12 +106,12 @@ function buildAnalysis(psd, bitumen, density, marshall, comments) {
   if (flowStatus === "pass") good.push("Marshall Flow is within specification.");
   if (flowStatus === "high") {
     issues.push(`Marshall Flow is HIGH — actual ${marshall.flow}mm vs spec 2.0-4.0mm.`);
-    rootCauses.push("High flow may indicate soft/tender mix, excess binder, weak aggregate skeleton, poor sample conditioning, Marshall timing issue, water bath issue, or flow gauge/machine issue.");
-    immediateChecks.push("Verify Marshall testing timing, water bath temperature, conditioning duration, transfer time from bath to machine, machine calibration and flow gauge operation.");
+    rootCauses.push("High flow may indicate soft/tender mix, excess binder, weak aggregate skeleton, poor sample conditioning, timing issue, water bath issue, or flow gauge/machine issue.");
+    immediateChecks.push("Verify Marshall timing, bath temperature, conditioning duration, transfer time, machine calibration and flow gauge operation.");
   }
   if (flowStatus === "low") {
     issues.push(`Marshall Flow is LOW — actual ${marshall.flow}mm vs spec 2.0-4.0mm.`);
-    rootCauses.push("Low flow may indicate stiff/brittle mix, low binder content, harsh grading, excessive filler or sample/testing issue.");
+    rootCauses.push("Low flow may indicate stiff/brittle mix, low binder, harsh grading, excessive filler or sample/testing issue.");
   }
 
   if (entered(marshall.stability)) {
@@ -125,15 +123,15 @@ function buildAnalysis(psd, bitumen, density, marshall, comments) {
   }
 
   if (flowStatus === "high" && bitStatus === "low" && airStatus === "pass" && entered(marshall.stability) && stabValue >= 8) {
-    warnings.push("The result pattern is technically inconsistent: Flow is high, but binder is low, air voids are acceptable and stability is acceptable. This does not strongly support a normal production-rich mix failure.");
-    rootCauses.push("The low binder result may be a flyer or extraction/calculation issue, particularly if production settings and other volumetric results do not support a genuinely lean mix.");
-    immediateChecks.push("Repeat binder extraction and independently check sample mass, extraction process, filter/fines correction, oven drying, calculation and sample identification.");
+    warnings.push("The result pattern is technically inconsistent: Flow is high, but binder is low, air voids are acceptable and stability is acceptable.");
+    rootCauses.push("The low binder result may be a flyer or extraction/calculation issue if production settings and other volumetrics do not support a genuinely lean mix.");
+    immediateChecks.push("Repeat binder extraction and independently check sample mass, extraction process, filter/fines correction, drying, calculation and sample identification.");
   }
 
   if (commentText.includes("time limit") || commentText.includes("warning")) {
     warnings.push("Entered comments identify a test time limit/warning issue. This directly affects confidence in the Marshall Flow result.");
-    rootCauses.push("The elevated Flow result may be influenced by testing validity, conditioning time or timing compliance rather than production mix behaviour alone.");
-    immediateChecks.push("Repeat Marshall Stability and Flow testing under controlled timing conditions before accepting the Flow value as representative.");
+    rootCauses.push("The elevated Flow result may be influenced by testing validity, conditioning time or timing compliance.");
+    immediateChecks.push("Repeat Marshall Stability and Flow testing under controlled timing conditions before accepting Flow as representative.");
   }
 
   if (commentText.includes("pump") || commentText.includes("bitumen pump")) {
@@ -149,11 +147,11 @@ function buildAnalysis(psd, bitumen, density, marshall, comments) {
   }
 
   if (issues.length === 0) {
-    good.push("Overall result appears conforming based on entered values. Mix appears acceptable against the entered MRWA limits.");
-    actions.push("Continue monitoring trends against the approved mix design targets. Consider tightening any results close to limits before they become non-conforming.");
+    good.push("Overall result appears conforming based on entered values. Mix appears acceptable against entered MRWA limits.");
+    actions.push("Continue monitoring trends against approved mix design targets. Tighten any results close to limits before they become non-conforming.");
   }
 
-  return { issues, warnings, good, actions, rootCauses, designChanges, immediateChecks, psdResults };
+  return { issues, warnings, good, actions, rootCauses, designChanges, immediateChecks };
 }
 
 export default function App() {
@@ -161,6 +159,14 @@ export default function App() {
   const [loginName, setLoginName] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
+  const [showInfo, setShowInfo] = useState(false);
+
+  const [jobInfo, setJobInfo] = useState({
+    date: "",
+    sampleNumber: "",
+    location: "",
+    testedBy: "",
+  });
 
   const [psd, setPsd] = useState({});
   const [bitumen, setBitumen] = useState("");
@@ -190,6 +196,10 @@ export default function App() {
     }
   }
 
+  function updateJob(key, value) {
+    setJobInfo((prev) => ({ ...prev, [key]: value }));
+  }
+
   function updatePsd(sieve, value) {
     setPsd((prev) => ({ ...prev, [sieve]: value }));
   }
@@ -206,6 +216,10 @@ export default function App() {
     setSubmitted(true);
   }
 
+  function exportPage() {
+    window.print();
+  }
+
   if (!loggedIn) {
     return (
       <div className="container">
@@ -215,19 +229,56 @@ export default function App() {
         </div>
 
         <div className="card">
-          <label>
-            Login Name
-            <input value={loginName} onChange={(e) => setLoginName(e.target.value)} />
-          </label>
-
-          <label>
-            Password
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-          </label>
-
+          <label>Login Name<input value={loginName} onChange={(e) => setLoginName(e.target.value)} /></label>
+          <label>Password<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} /></label>
           <button className="analyseButton" onClick={handleLogin}>Login</button>
-
           {loginError && <p className="fail">{loginError}</p>}
+        </div>
+      </div>
+    );
+  }
+
+  if (showInfo) {
+    return (
+      <div className="container">
+        <div className="card header">
+          <h1>A.S.T.A Information Guide</h1>
+          <p>What each result means and how it affects asphalt mix performance.</p>
+        </div>
+
+        <button className="analyseButton" onClick={() => setShowInfo(false)}>Back to Test Entry</button>
+
+        <div className="card">
+          <h2>PSD – Particle Size Distribution</h2>
+          <p>PSD shows the percentage of aggregate passing each sieve. It controls the structure of the asphalt mix.</p>
+          <p>Coarse grading or low fines can reduce mortar, make the mix harsh, increase air void sensitivity, and increase ravelling/moisture risk.</p>
+          <p>Too many fines can increase binder demand, make the mix tender, reduce voids, or create stiffness depending on binder and filler balance.</p>
+
+          <h2>Bitumen Content</h2>
+          <p>Bitumen binds the aggregate together and provides waterproofing, flexibility and durability.</p>
+          <p>Low binder can cause dry/harsh mix, high air voids, ravelling, cracking and reduced durability.</p>
+          <p>High binder can cause flushing, bleeding, high flow, rutting and instability.</p>
+          <p>If binder is low but flow is high and voids/stability are acceptable, the binder result may need rechecking because the results do not fully correlate.</p>
+
+          <h2>Marshall Density and Voids</h2>
+          <p>Bulk density shows how compacted the specimen is. Maximum density is used to calculate air voids.</p>
+          <p>Air voids affect durability, permeability, oxidation and rutting risk. Target is 5.5%, with specification 4.0–7.0%.</p>
+          <p>Low air voids can indicate a rich or over-compacted mix and increase bleeding risk. High air voids can indicate low binder, coarse grading, poor compaction or insufficient fines.</p>
+
+          <h2>VMA</h2>
+          <p>VMA is voids in mineral aggregate. It shows the available space in the aggregate skeleton for binder and air voids.</p>
+          <p>Low VMA can reduce binder film thickness and long-term durability.</p>
+
+          <h2>Stability and Flow</h2>
+          <p>Stability measures load resistance. Flow measures deformation before failure.</p>
+          <p>High stability generally means strong aggregate interlock. Low stability may indicate weak structure, excess binder, poor compaction or testing issue.</p>
+          <p>High flow can indicate soft/tender mix, excess binder, weak aggregate skeleton, or Marshall testing/conditioning issue.</p>
+          <p>Low flow can indicate stiff/brittle mix, low binder, harsh grading or excessive filler.</p>
+
+          <h2>How A.S.T.A Correlates Results</h2>
+          <p>A.S.T.A does not just look at one failed item. It checks whether results make sense together.</p>
+          <p>Example: High Flow + Low Binder + Acceptable Air Voids + Acceptable Stability may suggest a testing, conditioning, timing or extraction issue rather than a simple production mix fault.</p>
+          <p>Example: Low fines + High Air Voids + Low Binder points more strongly toward a coarse/lean production or mix design issue.</p>
         </div>
       </div>
     );
@@ -238,6 +289,21 @@ export default function App() {
       <div className="card header">
         <h1>A.S.T.A – Asphalt Solutions Test Analysis</h1>
         <p>MRWA DG14 75B test result review and mix feedback system.</p>
+      </div>
+
+      <div className="topButtons">
+        <button className="analyseButton" onClick={() => setShowInfo(true)}>Information</button>
+        <button className="analyseButton" onClick={exportPage}>Export / Save PDF</button>
+      </div>
+
+      <div className="card">
+        <h2>Test Details</h2>
+        <div className="grid">
+          <label>Date<input type="date" value={jobInfo.date} onChange={(e) => updateJob("date", e.target.value)} /></label>
+          <label>Sample Number<input value={jobInfo.sampleNumber} onChange={(e) => updateJob("sampleNumber", e.target.value)} /></label>
+          <label>Location<input value={jobInfo.location} onChange={(e) => updateJob("location", e.target.value)} /></label>
+          <label>Tested By<input value={jobInfo.testedBy} onChange={(e) => updateJob("testedBy", e.target.value)} /></label>
+        </div>
       </div>
 
       <div className="card">
@@ -260,9 +326,7 @@ export default function App() {
                   <td>{row.sieve}</td>
                   <td>{row.target}%</td>
                   <td>{row.min} - {row.max}%</td>
-                  <td>
-                    <input value={psd[row.sieve] || ""} onChange={(e) => updatePsd(row.sieve, e.target.value)} />
-                  </td>
+                  <td><input value={psd[row.sieve] || ""} onChange={(e) => updatePsd(row.sieve, e.target.value)} /></td>
                   <td className={status}>{resultText(status)}</td>
                 </tr>
               );
@@ -314,6 +378,11 @@ export default function App() {
         <div className="card summary">
           <h2>Technical Summary Report</h2>
 
+          <p><strong>Date:</strong> {jobInfo.date || "Not entered"}</p>
+          <p><strong>Sample Number:</strong> {jobInfo.sampleNumber || "Not entered"}</p>
+          <p><strong>Location:</strong> {jobInfo.location || "Not entered"}</p>
+          <p><strong>Tested By:</strong> {jobInfo.testedBy || "Not entered"}</p>
+
           {analysis.issues.length === 0 ? (
             <h3 className="pass">OVERALL: CONFORMING</h3>
           ) : (
@@ -336,7 +405,7 @@ export default function App() {
           {analysis.immediateChecks.length === 0 ? <p>No immediate checks triggered beyond normal review.</p> : analysis.immediateChecks.map((item, i) => <p key={i}>• {item}</p>)}
 
           <h4>Mix Design / Production Adjustments To Consider</h4>
-          {analysis.designChanges.length === 0 ? <p>No mix design adjustment is currently recommended from the entered data.</p> : analysis.designChanges.map((item, i) => <p key={i}>• {item}</p>)}
+          {analysis.designChanges.length === 0 ? <p>No mix design adjustment is currently recommended from entered data.</p> : analysis.designChanges.map((item, i) => <p key={i}>• {item}</p>)}
 
           <h4>Recommended Actions</h4>
           {analysis.actions.length === 0 ? <p>Continue monitoring against targets.</p> : analysis.actions.map((item, i) => <p key={i}>• {item}</p>)}
