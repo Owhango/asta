@@ -30,6 +30,10 @@ function resultText(status) {
   return "";
 }
 
+function entered(value) {
+  return value !== "" && value !== null && value !== undefined && !isNaN(Number(value));
+}
+
 export default function App() {
   const [psd, setPsd] = useState({});
   const [bitumen, setBitumen] = useState("");
@@ -64,6 +68,19 @@ export default function App() {
     const warnings = [];
     const good = [];
     const actions = [];
+    const rootCauses = [];
+    const designChanges = [];
+    const immediateChecks = [];
+
+    const bitStatus = checkRange(bitumen, 4.4, 5.0);
+    const airStatus = checkRange(density.airVoids, 4.0, 7.0);
+    const flowStatus = checkRange(marshall.flow, 2.0, 4.0);
+
+    const stabValue = Number(marshall.stability);
+    const vmaValue = Number(density.vma);
+    const bitValue = Number(bitumen);
+    const airValue = Number(density.airVoids);
+    const flowValue = Number(marshall.flow);
 
     const psdResults = psdSpecs.map((s) => ({
       ...s,
@@ -81,77 +98,111 @@ export default function App() {
       ["0.600mm", "0.300mm", "0.150mm", "0.075mm"].includes(r.sieve) && r.status === "low"
     );
 
+    const highFines = failedPsd.filter((r) =>
+      ["0.600mm", "0.300mm", "0.150mm", "0.075mm"].includes(r.sieve) && r.status === "high"
+    );
+
     if (lowFines.length > 0) {
-      actions.push("Lower fine fraction is low. Mix may be running coarse/short on dust or filler. Review dust/filler feed and fine aggregate blend.");
-      warnings.push("Low fines can reduce mortar cohesion, increase harshness, affect compaction, and increase ravelling/moisture risk.");
+      warnings.push("The lower fine fraction is below specification. This indicates the mix is running coarse or short of fines/filler through the mortar fraction.");
+      rootCauses.push("Likely production/design contributors include insufficient dust/filler feed, fine aggregate deficiency, aggregate segregation, or a blend that is not matching the approved target grading.");
+      designChanges.push("Increase the overall dust/filler contribution where practical and review the aggregate blend to bring the 0.600mm, 0.300mm, 0.150mm and 0.075mm sieves back toward target.");
+      actions.push("Monitor the lower sieves closely during production. Low fines can reduce mortar cohesion, make the mix harsher, increase compaction sensitivity and increase ravelling/moisture risk.");
     }
 
-    const bitStatus = checkRange(bitumen, 4.4, 5.0);
+    if (highFines.length > 0) {
+      warnings.push("The lower fine fraction is above specification. This may create excessive mortar/filler demand and can affect workability, stiffness and binder demand.");
+      designChanges.push("Review dust/filler quantity and fine aggregate contribution. Reduce excessive fines if the mix is becoming stiff, dry, brittle or difficult to compact.");
+    }
+
     if (bitStatus === "pass") good.push("Bitumen content is within specification.");
     if (bitStatus === "low") {
       issues.push(`Bitumen content is LOW — actual ${bitumen}% vs spec 4.4-5.0%.`);
-      actions.push("Consider increasing binder toward target, around 4.7%, if confirmed by repeat extraction and production checks.");
+      actions.push("Confirm binder content by repeat extraction before making major production changes.");
+      designChanges.push("If repeat testing confirms low binder, increase binder toward the approved target of 4.7%, or at minimum into the 4.5–4.7% range while monitoring air voids, stability and flow.");
     }
     if (bitStatus === "high") {
       issues.push(`Bitumen content is HIGH — actual ${bitumen}% vs spec 4.4-5.0%.`);
-      actions.push("Review binder pump calibration, flow meter, density compensation and production set point.");
+      rootCauses.push("High binder may be caused by binder pump calibration, density compensation error, incorrect set point, sampling error, or extraction/calculation issue.");
+      actions.push("Check binder pump calibration, bitumen flow meter, density input, production set point and extraction calculation.");
     }
 
-    const airStatus = checkRange(density.airVoids, 4.0, 7.0);
     if (airStatus === "pass") good.push("Air voids are within specification.");
     if (airStatus === "low") {
       issues.push(`Air voids are LOW — actual ${density.airVoids}% vs spec 4.0-7.0%.`);
-      actions.push("Low air voids may indicate rich mix, over-compaction, excessive fines, or low void structure.");
+      rootCauses.push("Low air voids may indicate rich mix, excessive fines, over-compaction, high density or reduced void structure.");
+      actions.push("Check binder content, grading shape, filler content and compaction process.");
     }
     if (airStatus === "high") {
       issues.push(`Air voids are HIGH — actual ${density.airVoids}% vs spec 4.0-7.0%.`);
-      actions.push("High air voids may indicate low binder, coarse grading, poor compaction, or insufficient fines.");
+      rootCauses.push("High air voids may indicate low binder, coarse grading, insufficient fines, poor compaction or harsh aggregate structure.");
+      actions.push("Review binder content, lower fines, compaction temperature and aggregate blend.");
     }
 
-    const vmaValue = Number(density.vma);
-    if (density.vma !== "" && !isNaN(vmaValue)) {
+    if (entered(density.vma)) {
       if (vmaValue >= 14) good.push("VMA is acceptable.");
       else {
         issues.push(`VMA is LOW — actual ${density.vma}% vs spec >14%.`);
-        actions.push("Low VMA may reduce binder film thickness and durability. Review aggregate packing and grading.");
+        rootCauses.push("Low VMA may indicate over-packed aggregate grading, insufficient void structure or poor aggregate blend balance.");
+        actions.push("Review aggregate packing and grading shape. Low VMA can reduce binder film thickness and long-term durability.");
       }
     }
 
-    const flowStatus = checkRange(marshall.flow, 2.0, 4.0);
     if (flowStatus === "pass") good.push("Marshall Flow is within specification.");
     if (flowStatus === "low") {
       issues.push(`Marshall Flow is LOW — actual ${marshall.flow}mm vs spec 2.0-4.0mm.`);
-      actions.push("Low flow may indicate stiff/brittle mix, low binder, harsh grading, or excessive filler.");
+      rootCauses.push("Low flow may indicate a stiff or brittle mix, low binder content, harsh grading, excessive filler or sample/testing issue.");
+      designChanges.push("If repeat testing confirms low flow, consider a controlled binder increase or reduce excessive filler/fines depending on grading and air voids.");
     }
     if (flowStatus === "high") {
       issues.push(`Marshall Flow is HIGH — actual ${marshall.flow}mm vs spec 2.0-4.0mm.`);
-      actions.push("High flow may indicate soft/tender mix, excess binder, weak aggregate structure, or Marshall testing/conditioning issue.");
+      rootCauses.push("High flow may indicate soft/tender mix, excess binder, weak aggregate skeleton, poor sample conditioning, Marshall timing issue, water bath issue, or flow gauge/machine issue.");
+      immediateChecks.push("Verify Marshall testing timing, water bath temperature, conditioning duration, transfer time from bath to machine, machine calibration and flow gauge operation.");
     }
 
-    const stabValue = Number(marshall.stability);
-    if (marshall.stability !== "" && !isNaN(stabValue)) {
+    if (entered(marshall.stability)) {
       if (stabValue >= 8) good.push("Marshall Stability is within specification.");
       else {
         issues.push(`Marshall Stability is LOW — actual ${marshall.stability}kN vs spec >8.0kN.`);
-        actions.push("Low stability may indicate weak aggregate structure, excess binder, poor compaction, or sample/testing issue.");
+        rootCauses.push("Low stability may indicate weak aggregate structure, excess binder, poor compaction, low density, poor sample preparation or testing issue.");
+        actions.push("Review aggregate interlock, binder content, compaction temperature, sample preparation and equipment operation.");
       }
+    }
+
+    if (
+      flowStatus === "high" &&
+      bitStatus === "low" &&
+      airStatus === "pass" &&
+      entered(marshall.stability) &&
+      stabValue >= 8
+    ) {
+      warnings.push("The result pattern is technically inconsistent: Flow is high, but binder is low, air voids are acceptable and stability is acceptable. This does not strongly support a normal production-rich mix failure.");
+      rootCauses.push("The low binder result may be a flyer or extraction/calculation issue, particularly if production settings and other volumetric results do not support a genuinely lean mix.");
+      immediateChecks.push("Repeat binder extraction and independently check sample mass, extraction process, filter/fines correction, oven drying, calculation and sample identification.");
     }
 
     if (
       flowStatus === "high" &&
       bitStatus !== "high" &&
       airStatus === "pass" &&
+      entered(marshall.stability) &&
       stabValue >= 8
     ) {
-      warnings.push("High Flow does not fully correlate with otherwise acceptable stability/air voids. Review Marshall timing, conditioning, water bath temperature, flow gauge and machine calibration before assuming production issue.");
+      warnings.push("High Flow does not fully correlate with otherwise acceptable stability and air voids. Treat Flow as a major investigation item before assuming a production-only issue.");
+      immediateChecks.push("Check for Marshall test time warnings, sample holding time, water bath duration and whether the block was tested within the required procedure window.");
+    }
+
+    if (comments.toLowerCase().includes("time limit") || comments.toLowerCase().includes("warning")) {
+      warnings.push("Operator comments indicate a timing or warning issue. This should be treated as a significant testing validity concern.");
+      immediateChecks.push("Do not rely on Marshall Flow results until timing compliance has been confirmed or the test has been repeated under controlled conditions.");
     }
 
     if (issues.length === 0) {
-      good.push("Overall result appears conforming based on entered values. Mix appears acceptable, but continue monitoring trends against target values.");
+      good.push("Overall result appears conforming based on entered values. Mix appears acceptable against the entered MRWA limits.");
+      actions.push("Continue monitoring trends against the approved mix design targets. Consider tightening any results that are close to limits before they become non-conforming.");
     }
 
-    return { issues, warnings, good, actions, psdResults };
-  }, [psd, bitumen, density, marshall]);
+    return { issues, warnings, good, actions, rootCauses, designChanges, immediateChecks, psdResults };
+  }, [psd, bitumen, density, marshall, comments]);
 
   return (
     <div className="container">
@@ -236,7 +287,7 @@ export default function App() {
       </div>
 
       <div className="card summary">
-        <h2>Summary</h2>
+        <h2>Technical Summary Report</h2>
 
         {analysis.issues.length === 0 ? (
           <h3 className="pass">OVERALL: CONFORMING</h3>
@@ -247,18 +298,27 @@ export default function App() {
         <h4>Good Areas</h4>
         {analysis.good.map((item, i) => <p key={i} className="pass">✓ {item}</p>)}
 
-        <h4>Issues / Non-Conformances</h4>
+        <h4>Non-Conformances / Failed Areas</h4>
         {analysis.issues.length === 0 ? <p>No major non-conformances detected.</p> : analysis.issues.map((item, i) => <p key={i} className="fail">✗ {item}</p>)}
 
         <h4>Technical Warnings</h4>
         {analysis.warnings.length === 0 ? <p>No unusual technical warnings detected.</p> : analysis.warnings.map((item, i) => <p key={i} className="warn">⚠ {item}</p>)}
+
+        <h4>Likely Root Causes</h4>
+        {analysis.rootCauses.length === 0 ? <p>No specific root causes identified from entered data.</p> : analysis.rootCauses.map((item, i) => <p key={i}>• {item}</p>)}
+
+        <h4>Immediate Checks Required</h4>
+        {analysis.immediateChecks.length === 0 ? <p>No immediate checks triggered beyond normal review.</p> : analysis.immediateChecks.map((item, i) => <p key={i}>• {item}</p>)}
+
+        <h4>Mix Design / Production Adjustments To Consider</h4>
+        {analysis.designChanges.length === 0 ? <p>No mix design adjustment is currently recommended from the entered data.</p> : analysis.designChanges.map((item, i) => <p key={i}>• {item}</p>)}
 
         <h4>Recommended Actions</h4>
         {analysis.actions.length === 0 ? <p>Continue monitoring against targets.</p> : analysis.actions.map((item, i) => <p key={i}>• {item}</p>)}
 
         {comments && (
           <>
-            <h4>Entered Comments</h4>
+            <h4>Entered Comments / Site Notes</h4>
             <p>{comments}</p>
           </>
         )}
