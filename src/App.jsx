@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from "react";
 
 export default function App() {
@@ -111,45 +110,3 @@ export default function App() {
     </div>
   );
 }
-
-
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App'
-import './styles.css'
-
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
-
-
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f3f4f6;
-}
-.container {
-  max-width: 1000px;
-  margin: auto;
-  padding: 20px;
-}
-.card {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-}
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
-  gap: 12px;
-}
-input {
-  width: 100%;
-  padding: 10px;
-}
-.good { color: green; }
-.bad { color: red; }
-.warn { color: orange; }
