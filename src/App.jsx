@@ -243,42 +243,89 @@ export default function App() {
       <div className="container">
         <div className="card header">
           <h1>A.S.T.A Information Guide</h1>
-          <p>What each result means and how it affects asphalt mix performance.</p>
+          <p>How each asphalt result works, common causes of high/low results, likely fixes and how changes affect the rest of the mix.</p>
         </div>
 
         <button className="analyseButton" onClick={() => setShowInfo(false)}>Back to Test Entry</button>
 
         <div className="card">
           <h2>PSD – Particle Size Distribution</h2>
-          <p>PSD shows the percentage of aggregate passing each sieve. It controls the structure of the asphalt mix.</p>
-          <p>Coarse grading or low fines can reduce mortar, make the mix harsh, increase air void sensitivity, and increase ravelling/moisture risk.</p>
-          <p>Too many fines can increase binder demand, make the mix tender, reduce voids, or create stiffness depending on binder and filler balance.</p>
+          <p><strong>What it is:</strong> PSD shows the percentage of aggregate passing each sieve. It controls the stone skeleton, mortar content, workability, compaction and durability of the asphalt mix.</p>
+          <p><strong>If coarse / low passing:</strong> The mix may be short of fines or filler. This can reduce mortar, make the mix harsh, increase permeability, increase air void sensitivity and increase ravelling/moisture risk.</p>
+          <p><strong>Likely causes:</strong> Fine aggregate underfeeding, fixed dust feed too low, baghouse/filler return issue, stockpile segregation, loader practice, incorrect blend proportions or quarry grading changes.</p>
+          <p><strong>Likely fixes:</strong> Increase overall dust/filler feed where practical, review fine aggregate contribution, confirm current quarry gradings, check cold feed calibration and monitor the 0.600mm, 0.300mm, 0.150mm and 0.075mm sieves closely.</p>
+          <p><strong>If fine / high passing:</strong> Too many fines can increase binder demand, tighten voids, make the mix tender or over-filled, and may increase stiffness depending on binder/filler balance.</p>
+          <p><strong>Effect on other results:</strong> Adding fines/filler may reduce air voids, increase density, improve cohesion, but can also increase binder demand and affect Flow/Stability if overdone.</p>
 
           <h2>Bitumen Content</h2>
-          <p>Bitumen binds the aggregate together and provides waterproofing, flexibility and durability.</p>
-          <p>Low binder can cause dry/harsh mix, high air voids, ravelling, cracking and reduced durability.</p>
-          <p>High binder can cause flushing, bleeding, high flow, rutting and instability.</p>
-          <p>If binder is low but flow is high and voids/stability are acceptable, the binder result may need rechecking because the results do not fully correlate.</p>
+          <p><strong>What it is:</strong> Bitumen content is the binder percentage in the mix. It holds aggregate together, waterproofs the mix and gives flexibility.</p>
+          <p><strong>If low:</strong> The mix may become dry, harsh, difficult to compact, more permeable and more prone to ravelling/cracking.</p>
+          <p><strong>Likely causes:</strong> Low binder set point, binder pump/flow meter issue, density compensation issue, sample splitting issue, extraction/calculation error or unrepresentative sample.</p>
+          <p><strong>Likely fixes:</strong> Repeat extraction first. Check binder pump calibration, flow meter, bitumen density input and plant set point. If confirmed low, increase binder toward target, generally around 4.7% for this mix design.</p>
+          <p><strong>If high:</strong> The mix may become rich, soft, tender, prone to flushing, bleeding, rutting and high Flow.</p>
+          <p><strong>Effect on other results:</strong> Increasing binder usually improves workability and density, can lower air voids, can increase Flow, and may reduce Stability if excessive. Reducing binder can increase voids, reduce Flow and make the mix harsher.</p>
+          <p><strong>Important correlation:</strong> If binder is reported low but Flow is high and air voids/stability are acceptable, the binder result may be a flyer and should be retested before making large production changes.</p>
 
-          <h2>Marshall Density and Voids</h2>
-          <p>Bulk density shows how compacted the specimen is. Maximum density is used to calculate air voids.</p>
-          <p>Air voids affect durability, permeability, oxidation and rutting risk. Target is 5.5%, with specification 4.0–7.0%.</p>
-          <p>Low air voids can indicate a rich or over-compacted mix and increase bleeding risk. High air voids can indicate low binder, coarse grading, poor compaction or insufficient fines.</p>
+          <h2>Average Compaction Temperature</h2>
+          <p><strong>What it is:</strong> The temperature of the mix during compaction. It affects workability, density and Marshall performance.</p>
+          <p><strong>If too low:</strong> Mix becomes stiff, harder to compact, may produce higher air voids and lower density.</p>
+          <p><strong>If too high:</strong> Mix may become overly soft/tender and may influence Flow or binder behaviour.</p>
+          <p><strong>Likely fixes:</strong> Confirm thermometer accuracy, sample handling time, reheating process, compaction timing and plant discharge temperature.</p>
 
-          <h2>VMA</h2>
-          <p>VMA is voids in mineral aggregate. It shows the available space in the aggregate skeleton for binder and air voids.</p>
-          <p>Low VMA can reduce binder film thickness and long-term durability.</p>
+          <h2>Average Bulk Density</h2>
+          <p><strong>What it is:</strong> Bulk density shows how compacted the Marshall specimen is.</p>
+          <p><strong>If low:</strong> Usually indicates more air voids, poor compaction, coarse grading, low binder or harsh mix.</p>
+          <p><strong>If high:</strong> May indicate low voids, rich mix, high fines, high binder or over-compaction.</p>
+          <p><strong>Effect on other results:</strong> Bulk density is directly related to air voids. As density increases, air voids generally reduce.</p>
 
-          <h2>Stability and Flow</h2>
-          <p>Stability measures load resistance. Flow measures deformation before failure.</p>
-          <p>High stability generally means strong aggregate interlock. Low stability may indicate weak structure, excess binder, poor compaction or testing issue.</p>
-          <p>High flow can indicate soft/tender mix, excess binder, weak aggregate skeleton, or Marshall testing/conditioning issue.</p>
-          <p>Low flow can indicate stiff/brittle mix, low binder, harsh grading or excessive filler.</p>
+          <h2>Maximum Density</h2>
+          <p><strong>What it is:</strong> Maximum density is used with bulk density to calculate air voids.</p>
+          <p><strong>If questionable:</strong> Air void calculations may also be wrong.</p>
+          <p><strong>Likely fixes:</strong> Confirm test procedure, sample mass, calibration, drying and calculation.</p>
+
+          <h2>Average Air Voids</h2>
+          <p><strong>What it is:</strong> Air voids are the air spaces left in the compacted asphalt. Target is 5.5%, with specification 4.0–7.0%.</p>
+          <p><strong>If low:</strong> Mix may be too dense/rich, with increased bleeding, flushing and rutting risk.</p>
+          <p><strong>Likely causes:</strong> High binder, high fines, excessive compaction, low void aggregate structure or incorrect density result.</p>
+          <p><strong>Likely fixes:</strong> Check binder, fines, VMA, compaction effort and density calculations.</p>
+          <p><strong>If high:</strong> Mix may be too open, permeable and prone to oxidation, ravelling and moisture damage.</p>
+          <p><strong>Likely causes:</strong> Low binder, coarse grading, low fines/filler, poor compaction, low temperature or aggregate segregation.</p>
+          <p><strong>Likely fixes:</strong> Increase binder if confirmed low, increase fines/filler if grading is coarse, improve compaction temperature/process and review blend.</p>
+
+          <h2>Total V.M.A</h2>
+          <p><strong>What it is:</strong> VMA is the void space within the aggregate skeleton. It provides room for binder and air voids.</p>
+          <p><strong>If low:</strong> There may not be enough space for binder film thickness, reducing durability.</p>
+          <p><strong>Likely causes:</strong> Over-packed grading, excessive mid-size material or poor aggregate blend balance.</p>
+          <p><strong>Likely fixes:</strong> Review aggregate blend shape, adjust coarse/fine balance and check target grading.</p>
+          <p><strong>Effect on other results:</strong> VMA affects binder film thickness, air voids, durability and compaction behaviour.</p>
+
+          <h2>Marshall Stability</h2>
+          <p><strong>What it is:</strong> Stability measures the maximum load the compacted specimen can carry before failure.</p>
+          <p><strong>If low:</strong> Mix may have weak aggregate structure, excess binder, poor compaction, rounded aggregate, high voids or sample/testing issues.</p>
+          <p><strong>Likely fixes:</strong> Improve aggregate interlock, review binder content, check density/compaction and verify sample preparation.</p>
+          <p><strong>If very high:</strong> Mix may be strong but potentially stiff/brittle if combined with low Flow or low binder.</p>
+          <p><strong>Effect on other results:</strong> Stability should be interpreted with Flow. Strong stability with abnormal Flow may point to testing or conditioning issues.</p>
+
+          <h2>Marshall Flow</h2>
+          <p><strong>What it is:</strong> Flow measures how much the sample deforms before failure.</p>
+          <p><strong>If high:</strong> Mix may be soft/tender, too rich in binder, weak in structure, over-conditioned, incorrectly tested or affected by flow gauge/machine issue.</p>
+          <p><strong>Likely fixes:</strong> Check Marshall timing, water bath temperature, conditioning duration, transfer time, flow gauge and machine calibration. Then review binder and aggregate structure.</p>
+          <p><strong>If low:</strong> Mix may be stiff/brittle, low in binder, harsh, over-filled with dust/filler or incorrectly conditioned.</p>
+          <p><strong>Effect on other results:</strong> Increasing binder tends to increase Flow. Increasing filler can either stiffen the mix or improve cohesion depending on amount and binder balance.</p>
+
+          <h2>How Changes Affect Other Results</h2>
+          <p><strong>Increase binder:</strong> Usually improves workability and compaction, lowers air voids, may increase Flow, may reduce Stability if excessive, and improves durability if the mix was dry.</p>
+          <p><strong>Reduce binder:</strong> May reduce Flow and bleeding risk, but can increase air voids, reduce durability, increase ravelling risk and make the mix harsh.</p>
+          <p><strong>Increase dust/filler:</strong> Can improve lower PSD, mortar cohesion and reduce permeability. Too much can increase stiffness, binder demand and compaction difficulty.</p>
+          <p><strong>Reduce dust/filler:</strong> Can reduce stiffness/tenderness if excessive, but may increase voids, reduce cohesion and increase ravelling risk if taken too far.</p>
+          <p><strong>Increase coarse aggregate:</strong> Can improve stone skeleton and stability, but may increase voids and harshness if fines/binder are not balanced.</p>
+          <p><strong>Increase fine aggregate:</strong> Can improve workability and fill voids, but too much can weaken stone-on-stone contact and increase tenderness.</p>
 
           <h2>How A.S.T.A Correlates Results</h2>
           <p>A.S.T.A does not just look at one failed item. It checks whether results make sense together.</p>
-          <p>Example: High Flow + Low Binder + Acceptable Air Voids + Acceptable Stability may suggest a testing, conditioning, timing or extraction issue rather than a simple production mix fault.</p>
-          <p>Example: Low fines + High Air Voids + Low Binder points more strongly toward a coarse/lean production or mix design issue.</p>
+          <p><strong>Example:</strong> High Flow + Low Binder + Acceptable Air Voids + Acceptable Stability may suggest testing, conditioning, timing or extraction issue rather than a simple production mix fault.</p>
+          <p><strong>Example:</strong> Low fines + High Air Voids + Low Binder points more strongly toward a coarse/lean production or mix design issue.</p>
+          <p><strong>Example:</strong> High binder + Low Air Voids + High Flow points more strongly toward rich/tender mix and possible rutting/flushing risk.</p>
         </div>
       </div>
     );
